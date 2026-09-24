@@ -1,0 +1,13 @@
+{
+  "name": "qci-e-report-akbar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QCI Krian integrated E-Report built from the proven Portal QC data flow.",
+  "scripts": {
+    "start": "node server.js",
+    "demo": "DATA_MODE=demo node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

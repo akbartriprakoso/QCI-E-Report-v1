@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QCI E-Report | Krian</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">QCI</div>
+        <div>
+          <strong>E-REPORT</strong>
+          <small>Krian Plant</small>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item active" data-view="overview"><span>01</span>Overview</button>
+        <button class="nav-item" data-view="corn"><span>02</span>Corn Q1ST</button>
+        <button class="nav-item" data-view="rmlocal"><span>03</span>RM Local</button>
+        <button class="nav-item" data-view="moisture"><span>04</span>Moisture / PRG</button>
+        <button class="nav-item" data-view="kett"><span>05</span>Kett / Dryer</button>
+        <button class="nav-item" data-view="vdm"><span>06</span>Videometer</button>
+        <button class="nav-item" data-view="sources"><span>07</span>Data Sources</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="avatar">AT</div>
+          <div><strong>Akbar Tri Prakoso</strong><small>QCI Operations</small></div>
+        </div>
+        <div class="build">QCI E-Report v1.0</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">QUALITY CONTROL INFORMATION</div>
+          <h1 id="page-title">Operational E-Report</h1>
+        </div>
+        <div class="top-actions">
+          <div class="mode-pill" id="mode-pill">Checking...</div>
+          <button class="btn ghost" id="refresh-btn">Refresh</button>
+          <button class="btn primary" id="print-btn">Print / PDF</button>
+        </div>
+      </header>
+
+      <section class="filter-panel" id="filter-panel">
+        <div class="filter-field">
+          <label>Start Date</label>
+          <input type="date" id="start-date" />
+        </div>
+        <div class="filter-field">
+          <label>End Date</label>
+          <input type="date" id="end-date" />
+        </div>
+        <div class="filter-field search-field">
+          <label>Search</label>
+          <input type="search" id="search" placeholder="ID_LAP, truck, PO, supplier, material..." />
+        </div>
+        <div class="filter-field">
+          <label>Status</label>
+          <select id="status-filter">
+            <option value="">All</option>
+            <option value="ACCEPT">Accept</option>
+            <option value="HOLD">Hold / Retest</option>
+            <option value="REJECT">Reject</option>
+            <option value="MEASUREMENT">Measurement</option>
+          </select>
+        </div>
+        <button class="btn primary load-btn" id="load-btn">Load Report</button>
+        <a class="btn outline export-btn" id="export-btn" href="#">Export CSV</a>
+      </section>
+
+      <section id="overview-view" class="view active">
+        <div class="kpi-grid">
+          <article class="kpi-card"><span>Transactions</span><strong id="kpi-total">0</strong><small>rows in selected report</small></article>
+          <article class="kpi-card"><span>Accepted</span><strong id="kpi-accept">0</strong><small>final QC result</small></article>
+          <article class="kpi-card"><span>Hold / Retest</span><strong id="kpi-hold">0</strong><small>requires follow-up</small></article>
+          <article class="kpi-card"><span>Rejected</span><strong id="kpi-reject">0</strong><small>out of specification</small></article>
+          <article class="kpi-card"><span>Avg. Moisture</span><strong id="kpi-moisture">–</strong><small>available measurements</small></article>
+          <article class="kpi-card"><span>Data Sources</span><strong id="kpi-sources">0</strong><small>sources represented</small></article>
+        </div>
+
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><div><span class="section-kicker">LIVE SUMMARY</span><h2>Latest QC Activity</h2></div><span class="muted" id="last-updated">—</span></div>
+            <div id="activity-list" class="activity-list empty-state">Load a report to display activity.</div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><div><span class="section-kicker">TRACEABILITY</span><h2>Data Lineage</h2></div></div>
+            <div class="lineage">
+              <div class="lineage-node"><b>Q1ST</b><small>DATAQC</small></div>
+              <div class="arrow">→</div>
+              <div class="lineage-node"><b>ID_LAP</b><small>integration key</small></div>
+              <div class="arrow">→</div>
+              <div class="lineage-node"><b>Sampling</b><small>ABS / PRG / VDM</small></div>
+              <div class="arrow">→</div>
+              <div class="lineage-node"><b>E-Report</b><small>single view</small></div>
+            </div>
+            <div class="lineage-note">Klik baris report untuk melihat field, raw payload, dan sumber datanya.</div>
+          </section>
+        </div>
+      </section>
+
+      <section id="report-view" class="view">
+        <section class="panel report-panel">
+          <div class="panel-head">
+            <div><span class="section-kicker" id="report-kicker">REPORT</span><h2 id="report-title">Report</h2></div>
+            <div class="result-count" id="result-count">0 rows</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th><th>ID_LAP</th><th>Truck</th><th>PO</th><th>Supplier</th><th>Material</th><th>Moisture</th><th>Density</th><th>Result</th><th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="report-body"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="table-empty">Choose a date range and load the report.</div>
+        </section>
+      </section>
+
+      <section id="sources-view" class="view">
+        <section class="panel">
+          <div class="panel-head">
+            <div><span class="section-kicker">INTEGRATION</span><h2>Production Data Sources</h2></div>
+            <button class="btn outline" id="probe-all">Test Adapters</button>
+          </div>
+          <p class="source-intro">E-Report v1 mengambil data melalui adapter. Pada mode <b>legacy-api</b>, query lama yang sudah berjalan tetap digunakan melalui backend Portal QC, sehingga migrasi bisa dilakukan tanpa memutus data produksi.</p>
+          <div class="source-grid" id="source-grid"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="detail-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><span class="section-kicker">TRACE RECORD</span><h2 id="modal-title">Record Detail</h2></div>
+        <button class="icon-btn" data-close="1">×</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
