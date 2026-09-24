@@ -1,3 +1,7 @@
+.activity-list{max-height:320px;overflow-y:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:#c5cdd3 transparent}
+.activity-list::-webkit-scrollbar{width:7px}
+.activity-list::-webkit-scrollbar-thumb{background:#c5cdd3;border-radius:999px}
+.activity-list::-webkit-scrollbar-track{background:transparent}
 :root{
   --bg:#f4f6f8;--surface:#ffffff;--ink:#172029;--muted:#74808b;--line:#dfe5ea;
   --red:#c61920;--red-dark:#941217;--red-soft:#fff1f1;--green:#14835d;--amber:#a56a00;--blue:#1867a6;
