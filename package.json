@@ -5,9 +5,13 @@
   "description": "QCI Krian integrated E-Report built from the proven Portal QC data flow.",
   "scripts": {
     "start": "node server.js",
-    "demo": "DATA_MODE=demo node server.js"
+    "demo": "DATA_MODE=demo node server.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0"
   }
 }

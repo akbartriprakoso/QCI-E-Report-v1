@@ -1,0 +1,93 @@
+{
+  "generated_at": "2026-10-06T08:36:12.892396+00:00",
+  "nodes": {
+    "docs_field_lineage_traceability_di_e_report": {
+      "code_fingerprint": "bf4ea2ab2c012d86f1be2f0d15c5bc17090b0e487aae3397d95c46995f5a3888",
+      "label": "Traceability di E-Report",
+      "last": "2026-10-02T09:18:09.418723+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T09:18:09.418723+00:00",
+          "outcome": "useful",
+          "q": "pada modul overview kartu traceability dihapus saja, diganti dengan line chart"
+        }
+      ],
+      "score": 0.912336252,
+      "source_file": "docs/FIELD_LINEAGE.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "public_app_renderactivity": {
+      "code_fingerprint": "c41a35e15b27c7c79a96cc09471cd144794884d00279249ac7035f4e8017eb74",
+      "label": "renderActivity()",
+      "last": "2026-10-02T09:18:09.418723+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T09:18:09.418723+00:00",
+          "outcome": "useful",
+          "q": "pada modul overview kartu traceability dihapus saja, diganti dengan line chart"
+        }
+      ],
+      "score": 0.912336252,
+      "source_file": "public/app.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "public_app_rendersummary": {
+      "code_fingerprint": "c41a35e15b27c7c79a96cc09471cd144794884d00279249ac7035f4e8017eb74",
+      "label": "renderSummary()",
+      "last": "2026-10-02T09:18:09.418723+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T09:18:09.418723+00:00",
+          "outcome": "useful",
+          "q": "pada modul overview kartu traceability dihapus saja, diganti dengan line chart"
+        }
+      ],
+      "score": 0.912336252,
+      "source_file": "public/app.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "server_normalizerow": {
+      "code_fingerprint": "7ae3a6084720131559bf653cd3f604d27d55caf09e96f90f16f53bddd300ab03",
+      "label": "normalizeRow()",
+      "last": "2026-10-06T03:35:08.562189+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T03:35:08.562189+00:00",
+          "outcome": "useful",
+          "q": "untuk hasil export excelnya jangan kasih kosongan yang bernilai 0"
+        }
+      ],
+      "score": 0.995180924,
+      "source_file": "server.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "server_tonumber": {
+      "code_fingerprint": "7ae3a6084720131559bf653cd3f604d27d55caf09e96f90f16f53bddd300ab03",
+      "label": "toNumber()",
+      "last": "2026-10-06T03:39:46.401702+00:00",
+      "neg": 1,
+      "provenance": [
+        {
+          "date": "2026-10-06T03:39:46.401702+00:00",
+          "outcome": "corrected",
+          "q": "kasih nilai 0 saja yang kosong"
+        },
+        {
+          "date": "2026-10-06T03:35:08.562189+00:00",
+          "outcome": "useful",
+          "q": "untuk hasil export excelnya jangan kasih kosongan yang bernilai 0"
+        }
+      ],
+      "score": -7.3944e-05,
+      "source_file": "server.js",
+      "status": "contested",
+      "uses": 1,
+      "verdict": "dead end"
+    }
+  },
+  "version": 1
+}
