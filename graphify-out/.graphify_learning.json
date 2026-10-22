@@ -1,6 +1,22 @@
 {
-  "generated_at": "2026-10-06T08:36:12.892396+00:00",
+  "generated_at": "2026-10-07T10:39:12.020080+00:00",
   "nodes": {
+    "docs_data_flow_data_flow_qci_e_report": {
+      "code_fingerprint": "f3fa0acb689717a59c0ca76b5c770c0111410d3cbc9d86918f64720dd5996b44",
+      "label": "Data Flow — QCI E-Report",
+      "last": "2026-10-07T10:25:14.553989+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-07T10:25:14.553989+00:00",
+          "outcome": "useful",
+          "q": "buat ambil datanya langsung dari sumber databasenya, tidak dari server 10.13.5.151:5000"
+        }
+      ],
+      "score": 0.999776072,
+      "source_file": "docs/DATA_FLOW.md",
+      "status": "tentative",
+      "uses": 1
+    },
     "docs_field_lineage_traceability_di_e_report": {
       "code_fingerprint": "bf4ea2ab2c012d86f1be2f0d15c5bc17090b0e487aae3397d95c46995f5a3888",
       "label": "Traceability di E-Report",
@@ -12,8 +28,24 @@
           "q": "pada modul overview kartu traceability dihapus saja, diganti dengan line chart"
         }
       ],
-      "score": 0.912336252,
+      "score": 0.889740994,
       "source_file": "docs/FIELD_LINEAGE.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "docs_roadmap_v1_1_direct_read_only_integration": {
+      "code_fingerprint": "8d1055c828ed48b7b6488ca2e5bb088f471143f4c2cc652803469e2bba6e7036",
+      "label": "v1.1 — Direct Read-Only Integration",
+      "last": "2026-10-07T10:25:14.553989+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-07T10:25:14.553989+00:00",
+          "outcome": "useful",
+          "q": "buat ambil datanya langsung dari sumber databasenya, tidak dari server 10.13.5.151:5000"
+        }
+      ],
+      "score": 0.999776072,
+      "source_file": "docs/ROADMAP.md",
       "status": "tentative",
       "uses": 1
     },
@@ -28,7 +60,7 @@
           "q": "pada modul overview kartu traceability dihapus saja, diganti dengan line chart"
         }
       ],
-      "score": 0.912336252,
+      "score": 0.889740994,
       "source_file": "public/app.js",
       "status": "tentative",
       "uses": 1
@@ -44,13 +76,66 @@
           "q": "pada modul overview kartu traceability dihapus saja, diganti dengan line chart"
         }
       ],
-      "score": 0.912336252,
+      "score": 0.889740994,
       "source_file": "public/app.js",
       "status": "tentative",
       "uses": 1
     },
+    "readme_endpoint_e_report_baru": {
+      "code_fingerprint": "5078d3c20c5f19f092ddb1af579923e703b22f67973edb1341470841b6854455",
+      "label": "Endpoint E-Report Baru",
+      "last": "2026-10-06T08:40:36.880320+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T08:40:36.880320+00:00",
+          "outcome": "useful",
+          "q": "masih kosongan ketika aku download excelnya"
+        }
+      ],
+      "score": 0.975302479,
+      "source_file": "README.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "server": {
+      "code_fingerprint": "f55238faa401872d61e7c4a6669479b647ae74e161000eddd1cc52e25e5a7d56",
+      "label": "server.js",
+      "last": "2026-10-07T10:25:14.553989+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-07T10:25:14.553989+00:00",
+          "outcome": "useful",
+          "q": "buat ambil datanya langsung dari sumber databasenya, tidak dari server 10.13.5.151:5000"
+        },
+        {
+          "date": "2026-10-06T08:40:36.880320+00:00",
+          "outcome": "useful",
+          "q": "masih kosongan ketika aku download excelnya"
+        }
+      ],
+      "score": 1.97507855,
+      "source_file": "server.js",
+      "status": "preferred",
+      "uses": 2
+    },
+    "server_fetchlegacy": {
+      "code_fingerprint": "f55238faa401872d61e7c4a6669479b647ae74e161000eddd1cc52e25e5a7d56",
+      "label": "fetchLegacy()",
+      "last": "2026-10-07T10:25:14.553989+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-07T10:25:14.553989+00:00",
+          "outcome": "useful",
+          "q": "buat ambil datanya langsung dari sumber databasenya, tidak dari server 10.13.5.151:5000"
+        }
+      ],
+      "score": 0.999776072,
+      "source_file": "server.js",
+      "status": "tentative",
+      "uses": 1
+    },
     "server_normalizerow": {
-      "code_fingerprint": "7ae3a6084720131559bf653cd3f604d27d55caf09e96f90f16f53bddd300ab03",
+      "code_fingerprint": "f55238faa401872d61e7c4a6669479b647ae74e161000eddd1cc52e25e5a7d56",
       "label": "normalizeRow()",
       "last": "2026-10-06T03:35:08.562189+00:00",
       "provenance": [
@@ -60,13 +145,13 @@
           "q": "untuk hasil export excelnya jangan kasih kosongan yang bernilai 0"
         }
       ],
-      "score": 0.995180924,
+      "score": 0.970533904,
       "source_file": "server.js",
       "status": "tentative",
       "uses": 1
     },
     "server_tonumber": {
-      "code_fingerprint": "7ae3a6084720131559bf653cd3f604d27d55caf09e96f90f16f53bddd300ab03",
+      "code_fingerprint": "f55238faa401872d61e7c4a6669479b647ae74e161000eddd1cc52e25e5a7d56",
       "label": "toNumber()",
       "last": "2026-10-06T03:39:46.401702+00:00",
       "neg": 1,
@@ -82,7 +167,7 @@
           "q": "untuk hasil export excelnya jangan kasih kosongan yang bernilai 0"
         }
       ],
-      "score": -7.3944e-05,
+      "score": -7.2113e-05,
       "source_file": "server.js",
       "status": "contested",
       "uses": 1,

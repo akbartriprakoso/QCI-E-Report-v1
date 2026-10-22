@@ -7,6 +7,13 @@ const os = require('os');
 const { URL } = require('url');
 const zlib = require('zlib');
 const ExcelJS = require('exceljs');
+const {
+  closeDatabasePools,
+  databaseConfiguredFor,
+  databaseSources,
+  fetchDatabaseReport,
+  probeDatabaseSource
+} = require('./database');
 
 loadEnvFile(path.join(__dirname, '.env'));
 
@@ -16,13 +23,13 @@ function cliValue(name) {
 }
 
 const PORT = Number(cliValue('--port') || process.env.PORT || 8090);
-const DATA_MODE = String(cliValue('--data-mode') || process.env.DATA_MODE || 'demo').toLowerCase();
+const DATA_MODE = String(cliValue('--data-mode') || process.env.DATA_MODE || 'database').toLowerCase();
 const SERVER_HOST = String(
   process.argv.includes('--lan') ? '0.0.0.0' :
   process.argv.includes('--local') ? '127.0.0.1' :
   cliValue('--host') || process.env.SERVER_HOST || '0.0.0.0'
 );
-const LEGACY_API_BASE = String(cliValue('--legacy-api-base') || process.env.LEGACY_API_BASE || 'http://10.13.5.151:5000/api').replace(/\/$/, '');
+const LEGACY_API_BASE = String(cliValue('--legacy-api-base') || process.env.LEGACY_API_BASE || '').replace(/\/$/, '');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 function envMilliseconds(name, fallback) {
   const value = Number(process.env[name]);
@@ -273,6 +280,7 @@ function sourceFor(type) {
 async function fetchLegacy(type, start, end) {
   const endpoint = ENDPOINTS[type];
   if (!endpoint) throw new Error(`Unsupported report type: ${type}`);
+  if (!LEGACY_API_BASE) throw new Error('LEGACY_API_BASE is required when DATA_MODE=legacy-api');
   const url = new URL(`${LEGACY_API_BASE}/${endpoint}`);
   url.searchParams.set('startDate', start);
   url.searchParams.set('endDate', end);
@@ -289,6 +297,13 @@ async function fetchLegacy(type, start, end) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchSourceRows(type, start, end) {
+  if (DATA_MODE === 'database') return fetchDatabaseReport(type, start, end);
+  if (DATA_MODE === 'legacy-api') return fetchLegacy(type, start, end);
+  if (DATA_MODE === 'demo') return demoRows(type, start, end);
+  throw new Error(`Unsupported DATA_MODE: ${DATA_MODE}. Use database, legacy-api, or demo.`);
 }
 
 function extractLegacyRows(body, type) {
@@ -356,7 +371,7 @@ async function refreshReport(key, type, start, end) {
   const existing = reportRequests.get(key);
   if (existing) return existing;
   const request = (async () => {
-    const raw = DATA_MODE === 'legacy-api' ? await fetchLegacy(type, start, end) : demoRows(type, start, end);
+    const raw = await fetchSourceRows(type, start, end);
     const rows = raw.map((x, i) => normalizeRow(type, x, i));
     reportCache.set(key, { rows, fetchedAt: Date.now() });
     while (reportCache.size > MAX_REPORT_CACHE_ENTRIES) reportCache.delete(reportCache.keys().next().value);
@@ -776,30 +791,45 @@ const server = http.createServer(async (req, res) => {
         plant: process.env.PLANT_NAME || 'Krian',
         owner: process.env.APP_OWNER || 'Akbar Tri Prakoso',
         mode: DATA_MODE,
+        databaseConfigured: DATA_MODE === 'database'
+          ? Object.keys(ENDPOINTS).every(databaseConfiguredFor)
+          : undefined,
         legacyApiConfigured: Boolean(LEGACY_API_BASE),
         timestamp: new Date().toISOString()
       });
     }
 
     if (pathname === '/api/source-status') {
+      const sources = DATA_MODE === 'database' ? databaseSources() : [
+        { id:'dataqc', name:'DATAQC', role:'Q1ST incoming QC + VDM', via:DATA_MODE === 'legacy-api' ? 'Legacy API adapter' : 'Demo data generator', reports:['corn','rmlocal','vdm'] },
+        { id:'bulk1', name:'BulkSampler20', role:'Automatic sampling + raw moisture + screen', via:DATA_MODE === 'legacy-api' ? 'Legacy API adapter' : 'Demo data generator', reports:['corn','moisture','vdm'] },
+        { id:'production', name:'DATAPRODUKSI', role:'Kett / Dryer', via:DATA_MODE === 'legacy-api' ? 'Legacy API adapter' : 'Demo data generator', reports:['kett'] }
+      ];
       return json(res, 200, {
         mode: DATA_MODE,
-        gateway: DATA_MODE === 'legacy-api' ? LEGACY_API_BASE : 'Demo data generator',
-        sources: [
-          { id:'dataqc', name:'DATAQC', role:'Q1ST incoming QC + VDM', via:'Legacy API adapter', reports:['corn','rmlocal','vdm'] },
-          { id:'bulk1', name:'BulkSampler20', role:'Automatic sampling + raw moisture + screen', via:'Legacy API adapter', reports:['corn','moisture','vdm'] },
-          { id:'production', name:'DATAPRODUKSI', role:'Kett / Dryer', via:'Legacy API adapter', reports:['kett'] },
-          { id:'qcportal', name:'QCPortal', role:'Legacy manual/application data', via:'Not required by E-Report v1', reports:[] }
-        ]
+        gateway: DATA_MODE === 'database'
+          ? 'Direct read-only SQL Server connections'
+          : DATA_MODE === 'legacy-api' ? LEGACY_API_BASE : 'Demo data generator',
+        sources
       });
     }
 
     if (pathname === '/api/probe') {
+      const sourceId = u.searchParams.get('source');
+      if (sourceId && DATA_MODE === 'database') {
+        const started = Date.now();
+        try {
+          const rows = await probeDatabaseSource(sourceId);
+          return json(res, 200, { ok:true, source:sourceId, latencyMs:Date.now()-started, mode:DATA_MODE });
+        } catch (e) {
+          return json(res, 502, { ok:false, source:sourceId, error:e.message, latencyMs:Date.now()-started, mode:DATA_MODE });
+        }
+      }
       const type = u.searchParams.get('type') || 'corn';
       const d = new Date().toISOString().slice(0,10);
       const started = Date.now();
       try {
-        const rows = DATA_MODE === 'legacy-api' ? await fetchLegacy(type, d, d) : demoRows(type, d, d);
+        const rows = await fetchSourceRows(type, d, d);
         return json(res, 200, { ok:true, type, rows:rows.length, latencyMs:Date.now()-started, mode:DATA_MODE });
       } catch (e) {
         return json(res, 502, { ok:false, type, error:e.message, latencyMs:Date.now()-started, mode:DATA_MODE });
@@ -872,5 +902,15 @@ server.listen(PORT, SERVER_HOST, () => {
     console.log(`LAN   : ${lan.length ? lan.map(ip => `http://${ip}:${PORT}`).join(', ') : `http://<IP-PC-KANTOR>:${PORT}`}`);
   }
   console.log(`DATA_MODE=${DATA_MODE}`);
+  if (DATA_MODE === 'database') console.log('DATABASE_SOURCES=DATAQC,BulkSampler20,DATAPRODUKSI');
   if (DATA_MODE === 'legacy-api') console.log(`LEGACY_API_BASE=${LEGACY_API_BASE}`);
 });
+
+async function shutdown(signal) {
+  console.log(`${signal} received, closing database pools`);
+  await closeDatabasePools();
+  server.close(() => process.exit(0));
+}
+
+process.once('SIGINT', () => void shutdown('SIGINT'));
+process.once('SIGTERM', () => void shutdown('SIGTERM'));

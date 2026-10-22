@@ -24,22 +24,41 @@ async function freePort() {
   return port;
 }
 
-function waitForServer(child) {
+function waitForServer(child, port) {
   return new Promise((resolve, reject) => {
     let output = '';
-    const timer = setTimeout(() => reject(new Error(`Server start timed out:\n${output}`)), 10000);
+    let settled = false;
+
+    function finish(error) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      clearInterval(probeTimer);
+      if (error) reject(error);
+      else resolve();
+    }
+
+    const timer = setTimeout(() => finish(new Error(`Server start timed out:\n${output}`)), 10000);
     const onData = chunk => {
       output += chunk.toString();
       if (output.includes('QCI E-Report listening')) {
-        clearTimeout(timer);
-        resolve();
+        finish();
       }
     };
+
+    const probeTimer = setInterval(() => {
+      http.get('http://127.0.0.1:' + port + '/api/health', res => {
+        res.resume();
+        if (res.statusCode === 200) finish();
+      }).on('error', () => {
+        // Server is not ready yet.
+      });
+    }, 150);
+
     child.stdout.on('data', onData);
     child.stderr.on('data', onData);
     child.once('exit', code => {
-      clearTimeout(timer);
-      reject(new Error(`Server exited with code ${code}:\n${output}`));
+      finish(new Error(`Server exited with code ${code}:\n${output}`));
     });
   });
 }
@@ -78,7 +97,7 @@ test('Excel export preserves numeric zero and fills missing cells with zero', as
     '--legacy-api-base', `http://127.0.0.1:${legacyPort}`
   ], { cwd: PROJECT_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
   t.after(() => child.kill());
-  await waitForServer(child);
+  await waitForServer(child, appPort);
 
   const response = await fetch(
     `http://127.0.0.1:${appPort}/api/export?type=moisture&start=2026-10-06&end=2026-10-06&format=xlsx`

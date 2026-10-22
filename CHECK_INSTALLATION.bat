@@ -15,6 +15,8 @@ if errorlevel 1 (
   goto end
 )
 if exist node_modules\exceljs\package.json (echo Dependency exceljs: OK) else (echo Dependency exceljs: ERROR - jalankan npm install)
+if exist node_modules\mssql\package.json (echo Dependency mssql: OK) else (echo Dependency mssql: ERROR - jalankan npm install)
+if exist .env (echo Konfigurasi database .env: OK) else (echo Konfigurasi database .env: ERROR - salin .env.example lalu isi credential read-only)
 if exist public\index.html (echo Web App: OK) else (echo Web App: ERROR)
 if exist server.js (echo Server: OK) else (echo Server: ERROR)
 echo.

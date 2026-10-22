@@ -12,6 +12,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "exceljs": "4.4.0"
+    "exceljs": "4.4.0",
+    "mssql": "11.0.1"
   }
 }

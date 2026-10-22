@@ -8,7 +8,7 @@ E-Report operasional untuk QCI Krian yang dibangun ulang berdasarkan alur data n
 - Mempertahankan sumber data production yang sudah berjalan.
 - Menambahkan traceability: setiap report menampilkan asal sumber data.
 - Menjadikan `ID_LAP` sebagai kunci integrasi utama.
-- Menyediakan jalur migrasi bertahap dari backend Portal QC lama ke adapter/direct integration baru.
+- Membaca database sumber secara langsung melalui service account read-only.
 
 ## Report v1
 
@@ -19,7 +19,7 @@ E-Report operasional untuk QCI Krian yang dibangun ulang berdasarkan alur data n
 5. Videometer — DATAQC + BulkSampler20
 6. Source Monitor — status adapter dan tes koneksi
 
-## Cara Menjalankan — Production/LAN Transition Mode
+## Cara Menjalankan — Production/LAN Direct Database Mode
 
 Persyaratan: Node.js 18+ (direkomendasikan Node.js 22).
 
@@ -41,11 +41,9 @@ Saat server berjalan, alamat LAN yang terdeteksi akan ditampilkan di jendela com
 
 E-Report dapat dijalankan pada PC yang sama dengan `QCI_PM_Local_v1_3`: QCI PM memakai port `8787`, sementara E-Report memakai port `8090`.
 
-Default mode adalah `legacy-api` dan mengambil data dari backend Portal QC lama:
+Default mode adalah `database`. E-Report membuat koneksi read-only langsung ke `DATAQC`, dua sumber `BulkSampler20`, dan `DATAPRODUKSI`; backend Portal QC lama tidak diperlukan.
 
-`http://10.13.5.151:5000/api`
-
-Backend lama harus dapat diakses dari laptop/PC yang menjalankan aplikasi.
+Sebelum menjalankan aplikasi, salin `.env.example` menjadi `.env`, lalu isi `DB_USER` dan `DB_PASSWORD` dengan service account SQL Server yang hanya memiliki izin `SELECT`. Jika tiap database memakai credential berbeda, isi variabel `*_DB_USER` dan `*_DB_PASSWORD` per sumber.
 
 ## Menjalankan otomatis saat Windows mulai
 
@@ -53,17 +51,19 @@ Untuk menjadikan PC kantor sebagai server LAN seperti QCI PM v1.3, klik dua kali
 
 Untuk melepas startup otomatis dan rule firewall, jalankan `stop_e_report.bat` sebagai Administrator.
 
-## Cara Menjalankan — Demo / Laptop di Luar Jaringan Plant
+## Cara Menjalankan — Database Produksi
+
+```bat
+START_E_REPORT_LAN.bat
+```
+
+Launcher Windows lama berikut juga sekarang menggunakan database produksi:
 
 ```bat
 START_DEMO_WINDOWS.bat
 ```
 
-atau:
-
-```bash
-DATA_MODE=demo node server.js
-```
+Pastikan PC terhubung ke jaringan plant dan konfigurasi akun database pada `.env` sudah tersedia.
 
 ## Konfigurasi .env
 
@@ -72,8 +72,17 @@ Copy `.env.example` menjadi `.env` jika ingin mengubah konfigurasi tanpa mengedi
 ```env
 PORT=8090
 SERVER_HOST=0.0.0.0
-DATA_MODE=legacy-api
-LEGACY_API_BASE=http://10.13.5.151:5000/api
+DATA_MODE=database
+DB_USER=qci_ereport_ro
+DB_PASSWORD=change-me
+DATAQC_DB_SERVER=10.13.5.193
+DATAQC_DB_DATABASE=DATAQC
+BULK_S3_DB_SERVER=10.13.10.167
+BULK_S3_DB_DATABASE=BulkSampler20
+BULK_LOCAL_DB_SERVER=10.13.5.193
+BULK_LOCAL_DB_DATABASE=BulkSampler20
+PRODUCTION_DB_SERVER=10.13.5.193
+PRODUCTION_DB_DATABASE=DATAPRODUKSI
 REPORT_CACHE_TTL_MS=5000
 REPORT_STALE_TTL_MS=30000
 PLANT_NAME=Krian
@@ -97,6 +106,6 @@ Tipe report: `corn`, `rmlocal`, `moisture`, `kett`, `vdm`.
 
 ## Catatan Keamanan
 
-E-Report v1 **tidak menyimpan credential SQL Server lama**. Pada fase transisi ia membaca API lama yang sudah digunakan production. Untuk deployment final, adapter API lama diganti dengan service account read-only atau internal integration API resmi.
+Credential SQL Server tidak disimpan di source code dan file `.env` tidak ikut Git. Gunakan service account khusus E-Report dengan izin `SELECT` saja pada tabel/view yang dibutuhkan. Connection pooling dibatasi oleh `DB_POOL_MAX`; timeout koneksi dan query dapat diatur melalui `.env`.
 
 Aplikasi ini adalah modul reporting read-only. Authentication/SSO sebaiknya dipasang di QCI Operations Platform/Core Portal sebelum rollout multi-user production.

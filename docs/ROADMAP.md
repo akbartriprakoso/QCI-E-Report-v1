@@ -13,10 +13,10 @@
 - Filter periode / search / status
 - CSV export
 - Print / PDF browser
-- Legacy API adapter
+- Direct read-only SQL Server adapter
 - Demo mode
 
-## v1.1 — Direct Read-Only Integration
+## v1.1 — Direct Read-Only Integration (implemented)
 
 - `DATAQC` adapter memakai service account read-only
 - `BulkSampler20` adapter memakai service account read-only

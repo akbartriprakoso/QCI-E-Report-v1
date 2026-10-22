@@ -24,8 +24,12 @@ try {
     }
 
     if (-not (Test-Path -LiteralPath $serverPath -PathType Leaf)) { throw 'server.js tidak ditemukan.' }
-    if (-not (Test-Path -LiteralPath (Join-Path $root 'node_modules\exceljs\package.json') -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath (Join-Path $root 'node_modules\exceljs\package.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $root 'node_modules\mssql\package.json') -PathType Leaf)) {
         throw 'Dependency belum terpasang. Jalankan npm install terlebih dahulu.'
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $root '.env') -PathType Leaf)) {
+        throw 'File .env belum ada. Salin .env.example menjadi .env lalu isi DB_USER dan DB_PASSWORD read-only.'
     }
 
     $nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
@@ -36,7 +40,7 @@ try {
     if ($major -lt 18) { throw "Node.js 18 atau lebih baru diperlukan. Versi terdeteksi: $nodeVersion" }
 
     $action = New-ScheduledTaskAction -Execute $nodePath `
-        -Argument ('"{0}" --lan --port 8090 --data-mode legacy-api --legacy-api-base "http://10.13.5.151:5000/api"' -f $serverPath) `
+        -Argument ('"{0}" --lan --port 8090 --data-mode database' -f $serverPath) `
         -WorkingDirectory $root
     $trigger = New-ScheduledTaskTrigger -AtStartup
     $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest

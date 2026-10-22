@@ -1,5 +1,11 @@
 # Changelog
 
+## Direct database integration
+
+- Added pooled, parameterized, read-only SQL Server adapters for `DATAQC`, `BulkSampler20`, and `DATAPRODUKSI`.
+- Changed production startup scripts to `DATA_MODE=database` and removed the Portal QC API server from the active data path.
+- Moved all database credentials to `.env`; no password is stored in source control.
+
 ## 1.0.0 — 23 Sep 2026
 
 - Rebuilt E-Report UI for QCI Krian.

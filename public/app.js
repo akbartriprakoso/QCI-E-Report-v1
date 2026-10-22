@@ -3,6 +3,7 @@
   const reportCache = new Map();
   const reportRequests = new Map();
   const CLIENT_CACHE_LIMIT = 12;
+  const PROBE_SLOW_THRESHOLD_MS = 5000;
   const $ = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
   const titles = {
@@ -182,7 +183,19 @@
   }
 
   async function probeAll(){
-    const map={dataqc:'corn',bulk1:'moisture',production:'kett'}; for(const [source,type] of Object.entries(map)){ const el=$(`#probe-${source}`); if(!el)continue; el.textContent='Testing…';el.className='probe-status'; try{const r=await api('/api/probe?type='+type);el.textContent=`OK · ${r.latencyMs}ms`;el.classList.add('ok')}catch(e){el.textContent='Unavailable';el.classList.add('fail')}}
+    const probes=state.mode==='database'
+      ?state.sources.map(source=>({id:source.id,url:'/api/probe?source='+encodeURIComponent(source.id)}))
+      :[{id:'dataqc',type:'corn'},{id:'bulk1',type:'moisture'},{id:'production',type:'kett'}].map(probe=>({...probe,url:'/api/probe?type='+probe.type}));
+    await Promise.all(probes.map(async probe=>{
+      const el=$(`#probe-${probe.id}`); if(!el)return;
+      el.textContent='Testing…'; el.className='probe-status';
+      try{
+        const result=await api(probe.url),slow=result.latencyMs>=PROBE_SLOW_THRESHOLD_MS;
+        el.textContent=slow?`Slow · ${(result.latencyMs/1000).toFixed(1)}s`:`OK · ${result.latencyMs}ms`;
+        el.classList.add(slow?'slow':'ok');
+      }
+      catch(error){el.textContent='Unavailable';el.classList.add('fail')}
+    }));
     const q=$('#probe-qcportal'); if(q){q.textContent='Not used';}
   }
 

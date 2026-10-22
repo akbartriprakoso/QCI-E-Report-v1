@@ -45,12 +45,8 @@ PARAM_CHECK                  VDM_RAW / RAW_D
 
 `ID_LAP` dipakai sebagai identifier utama lintas modul. `ID_ANTRIAN` digunakan sebagai identifier tambahan pada alur antrean/VDM.
 
-## Prinsip Migrasi
+## Integrasi Aktif
 
-Fase 1 — Adapter ke backend Portal QC lama.
+Adapter backend membaca database sumber secara langsung menggunakan service account read-only dan connection pool terpisah untuk `DATAQC`, `BulkSampler20` S3, `BulkSampler20` lokal, serta `DATAPRODUKSI`.
 
-Fase 2 — Adapter baru membaca source database menggunakan service account read-only.
-
-Fase 3 — Backend lama tidak lagi dibutuhkan untuk E-Report.
-
-UI dan kontrak API E-Report tetap sama sehingga pergantian sumber data tidak memerlukan rewrite frontend.
+Backend Portal QC lama tidak lagi berada di jalur data production E-Report. UI dan kontrak API E-Report tetap sama, sehingga frontend tidak perlu mengetahui struktur tabel atau credential database.
