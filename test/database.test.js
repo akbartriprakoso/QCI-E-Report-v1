@@ -22,16 +22,16 @@ test('direct database corn adapter merges DATAQC and BulkSampler rows', async ()
   const calls = [];
   const query = async (source, statement, params) => {
     calls.push({ source, statement, params });
-    if (source === 'dataqc' && statement.includes('TB_QC_INCOMING_TRUCK')) {
-      return [
-        { ID_LAP: 'CORN-1', MATERIAL: '101201', ENTRY_DATE: '2026-10-07', MOISTURE_FINAL: 29.1 },
-        { ID_LAP: 'CORN-1', MATERIAL: '101201', ENTRY_DATE: '2026-10-07', MOISTURE_FINAL: 29.3 }
-      ];
-    }
     if (source === 'dataqc' && statement.includes('TB_QC_INCOMING_PARAM_CHECK')) {
       return [
         { ID_LAP: 'CORN-1', SAMPLING_STEP: '1', PARAMETER_CHECK: 'MOISTURE', PARAMETER_VALUE: 29.2 },
         { ID_LAP: 'CORN-1', SAMPLING_STEP: '2', PARAMETER_CHECK: 'DENSITY', PARAMETER_VALUE: 704 }
+      ];
+    }
+    if (source === 'dataqc' && statement.includes('TB_QC_INCOMING_TRUCK')) {
+      return [
+        { ID_LAP: 'CORN-1', MATERIAL: '101201', ENTRY_DATE: '2026-10-07', MOISTURE_FINAL: 29.1 },
+        { ID_LAP: 'CORN-1', MATERIAL: '101201', ENTRY_DATE: '2026-10-07', MOISTURE_FINAL: 29.3 }
       ];
     }
     if (source === 'bulkS3') {
@@ -71,6 +71,26 @@ test('database adapter validates report dates before querying', async () => {
     /start date must not be after end date/
   );
   assert.equal(queried, false);
+});
+
+test('parameter rows follow the truck entry date, not their own update date', async () => {
+  const statements = [];
+  await fetchDatabaseReport('corn', '2026-10-07', '2026-10-07', {
+    query: async (source, statement) => {
+      if (source === 'dataqc') statements.push(statement);
+      return [];
+    }
+  });
+  const param = statements.find(s => s.includes('TB_QC_INCOMING_PARAM_CHECK'));
+  assert.doesNotMatch(param, /LAST_UPD\s*>=/);
+  assert.match(param, /ENTRY_DATE >= @startDate/);
+});
+
+test('moisture rows from different databases with the same DataKey stay separate', async () => {
+  const query = async source => [{ DataKey: 7, TruckNo: source, MaterialCode: '101227', Moisture: source === 'bulkS3' ? 12 : 14 }];
+  const rows = await fetchDatabaseReport('moisture', '2026-10-07', '2026-10-07', { query });
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows.map(r => r.Moisture).sort(), [[12], [14]]);
 });
 
 test('parameter names keep the legacy report column contract', () => {

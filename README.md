@@ -109,7 +109,7 @@ Tipe report: `corn`, `rmlocal`, `moisture`, `kett`, `vdm`.
 Hasil analisa moisture dari aplikasi XM60 Reader disimpan oleh E-Report sendiri (file `data/precisa-measurements.ndjson`, lokasi bisa diubah dengan `PRECISA_DATA_DIR`) dan ditampilkan di menu **Precisa XM60**.
 
 - `POST /api/precisa/measurements` — header `X-API-Key: <PRECISA_API_KEY>`, body `{"schema_version":"xm60.q1st.v1","results":[{"idempotency_key":"<analysis_id>","result":{"ANALYSIS_ID":"...","ID_LAP":"...","MOISTURE_PERCENT":12.3, ...}}]}`. Maksimal 200 item per request. Respons berisi status per item: `stored`, `duplicate` (idempotent, aman dikirim ulang) atau `rejected`.
-- `GET /api/precisa/measurements?start=YYYY-MM-DD&end=YYYY-MM-DD&search=...` — daftar hasil.
+- `GET /api/precisa/measurements?start=YYYY-MM-DD&end=YYYY-MM-DD&search=...&recordType=TRUCK|DAILY_VALIDATION` — daftar hasil. Validasi harian dikirim dengan `RECORD_TYPE=DAILY_VALIDATION` dan `SAMPLE_NAME` (tanpa ID_LAP/TRUCK_NO); ditampilkan lewat pilihan "Daily validation" di menu Precisa.
 
 Isi `PRECISA_API_KEY` di `.env` (wajib untuk menerima data; tanpa itu POST dijawab 503), jalankan server dengan `--lan` agar bisa diakses dari PC XM60, dan buka port server di firewall PC server. Di XM60 Reader: Pengaturan → **E-Report server** → isi URL (`http://IP-PC-SERVER:PORT`) dan API key, lalu tekan TEST E-REPORT.
 

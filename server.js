@@ -226,6 +226,10 @@ function csvEscape(value) {
 }
 
 function toNumber(v) {
+  if (Array.isArray(v)) {
+    const values = v.map(x => (x === '' || x == null ? NaN : Number(x))).filter(Number.isFinite);
+    return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+  }
   if (v === '' || v == null) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
@@ -238,16 +242,16 @@ function first(...values) {
 function normalizeStatus(v) {
   const x = String(v || '').trim().toUpperCase();
   if (!x) return 'UNKNOWN';
-  if (/(ACCEPT|PASS|OK|RELEASE|NORMAL|APPROVE)/.test(x)) return 'ACCEPT';
-  if (/(REJECT|FAIL|NG)/.test(x)) return 'REJECT';
-  if (/(HOLD|RETEST|SAMPLING 2|RESAMPLE|PENDING|WAIT)/.test(x)) return 'HOLD';
+  if (/\b(REJECT|REJECTED|FAIL|FAILED|NG)\b|NOT OK/.test(x)) return 'REJECT';
+  if (/\b(ACCEPT|ACCEPTED|PASS|PASSED|OK|RELEASE|RELEASED|NORMAL|APPROVE|APPROVED)\b/.test(x)) return 'ACCEPT';
+  if (/\b(HOLD|RETEST|RESAMPLE|PENDING|WAIT|WAITING)\b|SAMPLING 2/.test(x)) return 'HOLD';
   return x;
 }
 
 function normalizeRow(type, item, idx) {
   const base = {
     type,
-    rowKey: `${type}-${first(item.ID_LAP, item.id_Lap, item.DataKey, item.ID_ANTRIAN, idx)}`,
+    rowKey: `${type}-${first(item.ID_LAP, item.id_Lap, item.DataKey, item.ID_ANTRIAN, idx)}${item.SourceDb ? `-${item.SourceDb}` : ''}${type === 'kett' && item.TEST_STAGE ? `-${item.TEST_STAGE}` : ''}`,
     idLap: first(item.ID_LAP, item.id_Lap, item.ID_LAPORAN, ''),
     idAntrian: first(item.ID_ANTRIAN, item.IdAntrian, ''),
     qcDoc: first(item.QCDOC, item.QC_DOC, ''),
@@ -263,7 +267,7 @@ function normalizeRow(type, item, idx) {
     sampling2: first(item.SAMPLING_2_RESULT, item.SAMPLING2_RESULT, ''),
     finalResult: normalizeStatus(first(item.TEST_RESULT, item.FINAL_RESULT, item.RESULT, item.REMARKS, '')),
     reason: first(item.TEST_REASON, item.REASON, item.NOTE, ''),
-    moisture: toNumber(first(item.MOISTURE, item.MoistureAvg, item.MC, item.moisture)),
+    moisture: toNumber(first(item.MOISTURE, item.MoistureAvg, item.MC, item.moisture, toNumber(item.MOISTURE_FINAL))),
     moisture2: toNumber(first(item.MOISTURE2, item.MOISTURE_FINAL2, '')),
     density: toNumber(first(item.DENSITY, item.SAMPLE_DENSITY, item.TRUE_DENSITY, '')),
     density2: toNumber(first(item.DENSITY2, '')),
@@ -986,7 +990,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'GET') {
         const start = u.searchParams.get('start') || '';
         const end = u.searchParams.get('end') || start;
-        const rows = precisaStore.list({ start, end, search: u.searchParams.get('search') });
+        const rows = precisaStore.list({ start, end, search: u.searchParams.get('search'), recordType: u.searchParams.get('recordType') });
         const moistures = rows.map(r => r.moisturePercent).filter(v => typeof v === 'number');
         return json(res, 200, {
           start, end,

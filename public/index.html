@@ -148,15 +148,11 @@
         <section class="panel report-panel">
           <div class="panel-head">
             <div><span class="section-kicker">PRECISA XM60</span><h2>Moisture Analysis Results</h2></div>
-            <div><span class="probe-status" id="precisa-status">Loading...</span> <span class="result-count" id="precisa-count">0 rows</span></div>
+            <div><select id="precisa-type" aria-label="Record type"><option value="TRUCK">Truck analysis</option><option value="DAILY_VALIDATION">Daily validation</option></select> <span class="probe-status" id="precisa-status">Loading...</span> <span class="result-count" id="precisa-count">0 rows</span></div>
           </div>
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Received</th><th>ID_LAP</th><th>Truck</th><th>PO</th><th>Supplier</th><th>Material</th><th>Moisture (%)</th><th>Temperature (&deg;C)</th><th>Original Weight (g)</th><th>Operator</th><th>XM60 Serial</th>
-                </tr>
-              </thead>
+              <thead id="precisa-head"></thead>
               <tbody id="precisa-body"></tbody>
             </table>
           </div>

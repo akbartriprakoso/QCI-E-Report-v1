@@ -31,6 +31,22 @@ test('precisa store validates, deduplicates and persists measurements', () => {
   assert.equal(store.list({ search: 'krn-1' }).length, 1);
 });
 
+test('precisa store accepts daily validation without truck identity and filters by type', () => {
+  const store = createPrecisaStore(fs.mkdtempSync(path.join(os.tmpdir(), 'precisa-val-')));
+  const validation = result({
+    ANALYSIS_ID: 'v-1', ID_LAP: null, TRUCK_NO: null, RECORD_TYPE: 'DAILY_VALIDATION', SAMPLE_NAME: '',
+    ORIGINAL_WEIGHT_G: 0, MOISTURE_PERCENT: null
+  });
+  const outcome = store.ingest([result(), validation, result({ ANALYSIS_ID: 'x', ID_LAP: '', RECORD_TYPE: 'TRUCK' })]);
+  assert.deepEqual(outcome.map(x => x.status), ['stored', 'stored', 'rejected']);
+  const rows = store.list({ recordType: 'DAILY_VALIDATION' });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].sampleName, 'TANPA SAMPLE');
+  assert.equal(rows[0].moisturePercent, null);
+  assert.equal(store.list({ recordType: 'TRUCK' }).length, 1);
+  assert.equal(store.list({}).length, 2);
+});
+
 test('precisa API requires the API key and stores posted results', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'precisa-api-'));
   const port = 18000 + Math.floor(Math.random() * 1000);

@@ -287,7 +287,9 @@ async function fetchCorn(params, query) {
     query('dataqc', `
       SELECT ID_LAP, SAMPLING_STEP, PARAMETER_CHECK, PARAMETER_VALUE, LAST_UPD
       FROM [dbo].[TB_QC_INCOMING_PARAM_CHECK]
-      WHERE LAST_UPD >= @startDate AND LAST_UPD < @endDateExclusive
+      WHERE ID_LAP IN (
+              SELECT ID_LAP FROM [dbo].[TB_QC_INCOMING_TRUCK]
+              WHERE ENTRY_DATE >= @startDate AND ENTRY_DATE < @endDateExclusive)
         AND SAMPLING_STEP IN ('1', '2')
       ORDER BY LAST_UPD
     `, params),
@@ -343,7 +345,9 @@ async function fetchRmLocal(params, query) {
     query('dataqc', `
       SELECT ID_LAP, SAMPLING_STEP, PARAMETER_CHECK, PARAMETER_VALUE, LAST_UPD
       FROM [dbo].[TB_QC_INCOMING_PARAM_CHECK]
-      WHERE LAST_UPD >= @startDate AND LAST_UPD < @endDateExclusive
+      WHERE ID_LAP IN (
+              SELECT ID_LAP FROM [dbo].[TB_QC_INCOMING_TRUCK]
+              WHERE ENTRY_DATE >= @startDate AND ENTRY_DATE < @endDateExclusive)
         AND SAMPLING_STEP IN ('1', '2')
       ORDER BY LAST_UPD
     `, params)
@@ -355,7 +359,7 @@ async function fetchRmLocal(params, query) {
 function groupMoistureRows(rows) {
   const grouped = new Map();
   for (const row of rows) {
-    const key = String(row.DataKey ?? '');
+    const key = `${row.SourceDb ?? ''}:${row.DataKey ?? ''}`;
     let item = grouped.get(key);
     if (!item) {
       const material = MATERIALS[String(row.MaterialCode || '').trim()] || {};
@@ -387,8 +391,8 @@ async function fetchMoisture(params, query) {
     query('bulkLocal', statement, params)
   ]);
   return groupMoistureRows([
-    ...s3Rows.map(row => ({ ...row, ShelterCode: 'S3' })),
-    ...localRows
+    ...s3Rows.map(row => ({ ...row, ShelterCode: 'S3', SourceDb: 'S3' })),
+    ...localRows.map(row => ({ ...row, SourceDb: 'LOCAL' }))
   ]);
 }
 
@@ -450,7 +454,12 @@ async function fetchVdm(params, query) {
     query('dataqc', `
       SELECT ID_LAP, SAMPLING_STEP, PARAMETER_CHECK, PARAMETER_VALUE, LAST_UPD
       FROM [dbo].[TB_QC_INCOMING_PARAM_CHECK]
-      WHERE LAST_UPD >= @startDate AND LAST_UPD < @endDateExclusive
+      WHERE ID_LAP IN (
+              SELECT ID_LAP FROM [dbo].[TB_QC_INCOMING_VDM_RAW]
+              WHERE SAMPLE_DATE >= @startDate AND SAMPLE_DATE < @endDateExclusive
+              UNION
+              SELECT ID_ANTRIAN FROM [dbo].[TB_QC_INCOMING_VDM_RAW]
+              WHERE SAMPLE_DATE >= @startDate AND SAMPLE_DATE < @endDateExclusive)
         AND SAMPLING_STEP = '1'
       ORDER BY LAST_UPD
     `, params),

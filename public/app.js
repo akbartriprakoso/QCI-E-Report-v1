@@ -53,17 +53,23 @@
 
   function reload(){ return state.view==='precisa' ? loadPrecisa() : loadReport(); }
 
+  const PRECISA_COLUMNS={
+    TRUCK:[['Received',r=>fmtDate(r.receivedAt)],['ID_LAP',r=>`<b>${esc(r.idLap)}</b>`],['Truck',r=>esc(r.truckNo)],['PO',r=>esc(r.po||'–')],['Supplier',r=>esc(r.supplier||'–')],['Material',r=>esc(r.materialDescription||r.material||'–')],['Moisture (%)',r=>fmt(r.moisturePercent)],['Temperature (°C)',r=>fmt(r.temperatureC,1)],['Original Weight (g)',r=>fmt(r.originalWeightG)],['Operator',r=>esc(r.operator)],['XM60 Serial',r=>esc(r.serialNumber||'–')]],
+    DAILY_VALIDATION:[['Received',r=>fmtDate(r.receivedAt)],['Sample',r=>`<b>${esc(r.sampleName||'TANPA SAMPLE')}</b>`],['Moisture (%)',r=>fmt(r.moisturePercent)],['Temperature (°C)',r=>fmt(r.temperatureC,1)],['Original Weight (g)',r=>fmt(r.originalWeightG)],['Duration (min)',r=>fmt(r.durationMin,1)],['Operator',r=>esc(r.operator)],['Shift',r=>esc(r.shift||'–')],['XM60 Serial',r=>esc(r.serialNumber||'–')]]
+  };
+
   async function loadPrecisa(){
-    const start=$('#start-date').value,end=$('#end-date').value,search=$('#search').value;
-    const qs=new URLSearchParams({start,end}); if(search)qs.set('search',search);
-    const body=$('#precisa-body'),empty=$('#precisa-empty');
+    const start=$('#start-date').value,end=$('#end-date').value,search=$('#search').value,recordType=$('#precisa-type').value;
+    const qs=new URLSearchParams({start,end,recordType}); if(search)qs.set('search',search);
+    const body=$('#precisa-body'),empty=$('#precisa-empty'),columns=PRECISA_COLUMNS[recordType];
+    $('#precisa-head').innerHTML=`<tr>${columns.map(c=>`<th>${esc(c[0])}</th>`).join('')}</tr>`;
     $('#load-btn').textContent='Loading...'; $('#load-btn').disabled=true;
     try{
       const data=await api('/api/precisa/measurements?'+qs.toString());
       $('#precisa-count').textContent=`${data.rows.length} rows`;
       $('#precisa-status').textContent=data.rows.length?`${data.rows.length} results · avg ${fmt(data.summary.avgMoisture)}%`:'Connected · no results in period';
       empty.style.display=data.rows.length?'none':'block'; empty.textContent='No XM60 measurements in selected period.';
-      body.innerHTML=data.rows.map(r=>`<tr><td>${fmtDate(r.receivedAt)}</td><td><b>${esc(r.idLap)}</b></td><td>${esc(r.truckNo)}</td><td>${esc(r.po||'–')}</td><td>${esc(r.supplier||'–')}</td><td>${esc(r.materialDescription||r.material||'–')}</td><td>${fmt(r.moisturePercent)}</td><td>${fmt(r.temperatureC,1)}</td><td>${fmt(r.originalWeightG)}</td><td>${esc(r.operator)}</td><td>${esc(r.serialNumber||'–')}</td></tr>`).join('');
+      body.innerHTML=data.rows.map(r=>`<tr>${columns.map(c=>`<td>${c[1](r)}</td>`).join('')}</tr>`).join('');
       $('#last-updated').textContent='Updated '+new Date().toLocaleTimeString('id-ID');
     }catch(e){ body.innerHTML=''; empty.style.display='block'; empty.textContent='Unable to load XM60 results: '+e.message; toast(e.message); }
     finally{ $('#load-btn').textContent='Load Report'; $('#load-btn').disabled=false; }
@@ -227,6 +233,7 @@
   $('#probe-all').addEventListener('click',probeAll);
   $('#search').addEventListener('keydown',e=>{if(e.key==='Enter')reload()});
   $('#status-filter').addEventListener('change',()=>loadReport());
+  $('#precisa-type').addEventListener('change',loadPrecisa);
   $$('[data-close]').forEach(x=>x.addEventListener('click',closeModal));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 

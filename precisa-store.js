@@ -15,10 +15,13 @@ const FIELD_MAP = {
   RESIDUAL_WEIGHT_G: 'residualWeightG', TEMPERATURE_C: 'temperatureC', DURATION_MIN: 'durationMin',
   XM60_METHOD: 'method', XM60_SERIAL_NUMBER: 'serialNumber', MEASUREMENT_NUMBER: 'measurementNumber',
   MEASUREMENT_DATE: 'measurementDate', MEASUREMENT_TIME: 'measurementTime', STOP_REASON: 'stopReason',
-  RECEIVED_AT: 'receivedAt', SCAN_VALUE: 'scanValue', REGISTRATION_SOURCE: 'registrationSource'
+  RECEIVED_AT: 'receivedAt', SCAN_VALUE: 'scanValue', REGISTRATION_SOURCE: 'registrationSource',
+  RECORD_TYPE: 'recordType', SAMPLE_NAME: 'sampleName'
 };
 const NUMERIC = ['moisturePercent', 'originalWeightG', 'residualWeightG', 'temperatureC', 'durationMin'];
-const REQUIRED_TEXT = ['analysisId', 'idLap', 'truckNo', 'operator', 'shift', 'receivedAt'];
+const REQUIRED_TEXT = ['analysisId', 'operator', 'shift', 'receivedAt'];
+const TRUCK_TEXT = ['idLap', 'truckNo'];
+const RECORD_TYPES = ['TRUCK', 'DAILY_VALIDATION'];
 
 function normalizeResult(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('result must be an object');
@@ -27,7 +30,11 @@ function normalizeResult(input) {
     const value = input[label];
     record[key] = value === undefined || value === null ? '' : value;
   }
-  for (const key of REQUIRED_TEXT) {
+  record.recordType = String(record.recordType).trim().toUpperCase() || 'TRUCK';
+  if (!RECORD_TYPES.includes(record.recordType)) throw new Error('recordType is not supported');
+  if (record.recordType === 'DAILY_VALIDATION') record.sampleName = String(record.sampleName).trim() || 'TANPA SAMPLE';
+  const required = record.recordType === 'TRUCK' ? [...REQUIRED_TEXT, ...TRUCK_TEXT] : REQUIRED_TEXT;
+  for (const key of required) {
     record[key] = String(record[key]).trim();
     if (!record[key]) throw new Error(`${key} is required`);
   }
@@ -91,15 +98,17 @@ function createPrecisaStore(dataDir) {
     return outcome;
   }
 
-  function list({ start, end, search } = {}) {
+  function list({ start, end, search, recordType } = {}) {
     const from = start ? Date.parse(`${start}T00:00:00`) : -Infinity;
     const to = end ? Date.parse(`${end}T23:59:59.999`) : Infinity;
     const needle = String(search || '').trim().toLowerCase();
+    const wanted = String(recordType || '').trim().toUpperCase();
     return [...records.values()]
       .filter(r => {
+        if (wanted && (r.recordType || 'TRUCK') !== wanted) return false;
         const time = Date.parse(r.receivedAt);
         if (time < from || time > to) return false;
-        return !needle || [r.idLap, r.truckNo, r.po, r.supplier, r.materialDescription, r.qcdoc, r.operator]
+        return !needle || [r.idLap, r.truckNo, r.po, r.supplier, r.materialDescription, r.qcdoc, r.operator, r.sampleName]
           .some(v => String(v || '').toLowerCase().includes(needle));
       })
       .sort((a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt));
