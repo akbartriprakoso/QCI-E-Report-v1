@@ -33,12 +33,14 @@ function normalizeResult(input) {
   }
   if (record.analysisId.length > 64) throw new Error('analysisId is too long');
   for (const key of NUMERIC) {
+    if (record[key] === '') { record[key] = null; continue; }
     const number = Number(record[key]);
-    if (record[key] === '' || !Number.isFinite(number)) throw new Error(`${key} must be a number`);
+    if (!Number.isFinite(number)) throw new Error(`${key} must be a number`);
     record[key] = number;
   }
-  if (record.moisturePercent < -10 || record.moisturePercent > 100) throw new Error('moisturePercent is out of range');
-  if (record.originalWeightG <= 0 || record.residualWeightG < 0) throw new Error('weight is out of range');
+  const { moisturePercent, originalWeightG, residualWeightG } = record;
+  if (moisturePercent !== null && (moisturePercent < -10 || moisturePercent > 100)) throw new Error('moisturePercent is out of range');
+  if ((originalWeightG !== null && originalWeightG < 0) || (residualWeightG !== null && residualWeightG < 0)) throw new Error('weight is out of range');
   if (Number.isNaN(Date.parse(record.receivedAt))) throw new Error('receivedAt must be an ISO date-time');
   for (const key of Object.values(FIELD_MAP)) {
     if (typeof record[key] === 'string') record[key] = record[key].trim().slice(0, 200);

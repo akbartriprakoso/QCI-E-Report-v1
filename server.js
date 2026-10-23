@@ -987,7 +987,7 @@ const server = http.createServer(async (req, res) => {
         const start = u.searchParams.get('start') || '';
         const end = u.searchParams.get('end') || start;
         const rows = precisaStore.list({ start, end, search: u.searchParams.get('search') });
-        const moistures = rows.map(r => r.moisturePercent);
+        const moistures = rows.map(r => r.moisturePercent).filter(v => typeof v === 'number');
         return json(res, 200, {
           start, end,
           summary: { total: rows.length, avgMoisture: moistures.length ? moistures.reduce((a, b) => a + b, 0) / moistures.length : null },
