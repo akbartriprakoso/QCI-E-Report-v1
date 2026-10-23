@@ -14,6 +14,8 @@ const {
   fetchDatabaseReport,
   probeDatabaseSource
 } = require('./database');
+const crypto = require('crypto');
+const { createPrecisaStore, SCHEMA_VERSION: PRECISA_SCHEMA } = require('./precisa-store');
 
 loadEnvFile(path.join(__dirname, '.env'));
 
@@ -165,6 +167,38 @@ function loadEnvFile(file) {
     const value = line.slice(idx + 1).trim().replace(/^['"]|['"]$/g, '');
     if (key && process.env[key] == null) process.env[key] = value;
   }
+}
+
+const precisaStore = createPrecisaStore(path.resolve(process.env.PRECISA_DATA_DIR || path.join(__dirname, 'data')));
+const MAX_BODY_BYTES = 1024 * 1024;
+
+function precisaAuthorized(req) {
+  const expected = String(process.env.PRECISA_API_KEY || '');
+  const provided = String(req.headers['x-api-key'] || '');
+  const a = crypto.createHash('sha256').update(provided).digest();
+  const b = crypto.createHash('sha256').update(expected).digest();
+  return Boolean(expected) && crypto.timingSafeEqual(a, b);
+}
+
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        reject(Object.assign(new Error('Request body too large'), { status: 413 }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
+      catch { reject(Object.assign(new Error('Invalid JSON body'), { status: 400 })); }
+    });
+    req.on('error', reject);
+  });
 }
 
 function json(res, status, body) {
@@ -930,11 +964,45 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { type, start, end, mode:DATA_MODE, summary:summarize(rows), rows:rows.map(publicRow) });
     }
 
+    if (pathname === '/api/precisa/measurements') {
+      if (req.method === 'POST') {
+        if (!process.env.PRECISA_API_KEY) return json(res, 503, { error:'PRECISA_API_KEY is not configured on the E-Report server' });
+        if (!precisaAuthorized(req)) return json(res, 401, { error:'Invalid API key' });
+        const body = await readJsonBody(req);
+        if (body.schema_version !== PRECISA_SCHEMA) return json(res, 400, { error:`schema_version must be ${PRECISA_SCHEMA}` });
+        const results = Array.isArray(body.results) ? body.results.map(item => item && item.result ? item.result : item) : null;
+        if (results && !results.length) return json(res, 200, { ok:true, stored:0, duplicates:0, rejected:0, results:[] });
+        let outcome;
+        try { outcome = precisaStore.ingest(results); }
+        catch (error) { return json(res, 400, { error:error.message }); }
+        return json(res, 200, {
+          ok: true,
+          stored: outcome.filter(x => x.status === 'stored').length,
+          duplicates: outcome.filter(x => x.status === 'duplicate').length,
+          rejected: outcome.filter(x => x.status === 'rejected').length,
+          results: outcome
+        });
+      }
+      if (req.method === 'GET') {
+        const start = u.searchParams.get('start') || '';
+        const end = u.searchParams.get('end') || start;
+        const rows = precisaStore.list({ start, end, search: u.searchParams.get('search') });
+        const moistures = rows.map(r => r.moisturePercent);
+        return json(res, 200, {
+          start, end,
+          summary: { total: rows.length, avgMoisture: moistures.length ? moistures.reduce((a, b) => a + b, 0) / moistures.length : null },
+          rows
+        });
+      }
+      return json(res, 405, { error:'Method not allowed' });
+    }
+
     if (serveStatic(req, res, pathname)) return;
     json(res, 404, { error:'Not found' });
   } catch (err) {
+    if (err.status) return json(res, err.status, { error: err.message });
     console.error(err);
-    json(res, 500, { error: err.name === 'AbortError' ? 'Data source timeout' : err.message });
+    json(res, 500,  { error: err.name === 'AbortError' ? 'Data source timeout' : err.message });
   }
 });
 

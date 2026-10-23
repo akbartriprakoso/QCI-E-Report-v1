@@ -96,7 +96,6 @@ button,input,select{font:inherit}.app-shell{display:grid;grid-template-columns:2
   .filter-panel{grid-template-columns:1fr}
   .filter-field:nth-child(3),.filter-field:nth-child(4),.load-btn,.export-btn{grid-column:auto}
 }
-.precisa-results{margin-top:16px}
 
 /* Final mobile containment pass: keep every grid/flex child inside the device viewport. */
 @media (max-width:700px){

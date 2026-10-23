@@ -41,13 +41,32 @@
     state.view=view;
     $$('.nav-item').forEach(x=>x.classList.toggle('active',x.dataset.view===view));
     $$('.view').forEach(x=>x.classList.remove('active'));
-    $('#filter-panel').style.display = ['sources','precisa'].includes(view) ? 'none' : 'grid';
-    $('#refresh-btn').hidden = view==='precisa';
+    $('#filter-panel').style.display = view==='sources' ? 'none' : 'grid';
+    const isPrecisa=view==='precisa';
+    $('#export-btn').hidden=isPrecisa; $('#status-filter').closest('.filter-field').hidden=isPrecisa;
     const [title,type,kicker]=titles[view]; $('#page-title').textContent=title;
     if(view==='overview') $('#overview-view').classList.add('active');
     else if(view==='sources') $('#sources-view').classList.add('active');
-    else if(view==='precisa') $('#precisa-view').classList.add('active');
+    else if(view==='precisa'){ $('#precisa-view').classList.add('active'); loadPrecisa(); }
     else { $('#report-view').classList.add('active'); $('#report-title').textContent=title; $('#report-kicker').textContent=kicker; state.reportType=type; loadReport(type); }
+  }
+
+  function reload(){ return state.view==='precisa' ? loadPrecisa() : loadReport(); }
+
+  async function loadPrecisa(){
+    const start=$('#start-date').value,end=$('#end-date').value,search=$('#search').value;
+    const qs=new URLSearchParams({start,end}); if(search)qs.set('search',search);
+    const body=$('#precisa-body'),empty=$('#precisa-empty');
+    $('#load-btn').textContent='Loading...'; $('#load-btn').disabled=true;
+    try{
+      const data=await api('/api/precisa/measurements?'+qs.toString());
+      $('#precisa-count').textContent=`${data.rows.length} rows`;
+      $('#precisa-status').textContent=data.rows.length?`${data.rows.length} results · avg ${fmt(data.summary.avgMoisture)}%`:'Connected · no results in period';
+      empty.style.display=data.rows.length?'none':'block'; empty.textContent='No XM60 measurements in selected period.';
+      body.innerHTML=data.rows.map(r=>`<tr><td>${fmtDate(r.receivedAt)}</td><td><b>${esc(r.idLap)}</b></td><td>${esc(r.truckNo)}</td><td>${esc(r.po||'–')}</td><td>${esc(r.supplier||'–')}</td><td>${esc(r.materialDescription||r.material||'–')}</td><td>${fmt(r.moisturePercent)}</td><td>${fmt(r.temperatureC,1)}</td><td>${fmt(r.originalWeightG)}</td><td>${esc(r.operator)}</td><td>${esc(r.serialNumber||'–')}</td></tr>`).join('');
+      $('#last-updated').textContent='Updated '+new Date().toLocaleTimeString('id-ID');
+    }catch(e){ body.innerHTML=''; empty.style.display='block'; empty.textContent='Unable to load XM60 results: '+e.message; toast(e.message); }
+    finally{ $('#load-btn').textContent='Load Report'; $('#load-btn').disabled=false; }
   }
 
   async function loadReport(type=state.reportType, quiet=false){
@@ -202,11 +221,11 @@
   }
 
   $$('.nav-item').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
-  $('#load-btn').addEventListener('click',()=>loadReport());
-  $('#refresh-btn').addEventListener('click',()=>loadReport());
+  $('#load-btn').addEventListener('click',reload);
+  $('#refresh-btn').addEventListener('click',reload);
   $('#print-btn').addEventListener('click',()=>window.print());
   $('#probe-all').addEventListener('click',probeAll);
-  $('#search').addEventListener('keydown',e=>{if(e.key==='Enter')loadReport()});
+  $('#search').addEventListener('keydown',e=>{if(e.key==='Enter')reload()});
   $('#status-filter').addEventListener('change',()=>loadReport());
   $$('[data-close]').forEach(x=>x.addEventListener('click',closeModal));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3
+
+- Removed the Demo Mode badge; footer label is now v2.3.
+- Added the Precisa XM60 module and an API-key-protected ingest API (`/api/precisa/measurements`) with its own NDJSON store.
+
 ## Direct database integration
 
 - Added pooled, parameterized, read-only SQL Server adapters for `DATAQC`, `BulkSampler20`, and `DATAPRODUKSI`.

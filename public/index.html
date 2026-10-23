@@ -145,32 +145,24 @@
       </section>
 
       <section id="precisa-view" class="view">
-        <section class="panel">
+        <section class="panel report-panel">
           <div class="panel-head">
-            <div><span class="section-kicker">PRECISA XM60</span><h2>Moisture Analysis Report</h2></div>
-            <span class="probe-status">Waiting for XM60 integration</span>
-          </div>
-          <p class="source-intro">XM60 Reader currently stores measurements locally and exports the <code>xm60.q1st.v1</code> JSON contract. It does not yet provide a live data feed to E-Report. Once the XM60 integration is enabled, measurement records will appear here.</p>
-        </section>
-        <section class="panel report-panel precisa-results">
-          <div class="panel-head">
-            <div><span class="section-kicker">XM60 MEASUREMENTS</span><h2>Recent Results</h2></div>
-            <div class="result-count">0 rows</div>
+            <div><span class="section-kicker">PRECISA XM60</span><h2>Moisture Analysis Results</h2></div>
+            <div><span class="probe-status" id="precisa-status">Loading...</span> <span class="result-count" id="precisa-count">0 rows</span></div>
           </div>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Received</th><th>ID_LAP</th><th>Truck</th><th>PO</th><th>Supplier</th><th>Material</th><th>Moisture (%)</th><th>Temperature (°C)</th><th>Original Weight (g)</th><th>Operator</th><th>Integration Status</th>
+                  <th>Received</th><th>ID_LAP</th><th>Truck</th><th>PO</th><th>Supplier</th><th>Material</th><th>Moisture (%)</th><th>Temperature (&deg;C)</th><th>Original Weight (g)</th><th>Operator</th><th>XM60 Serial</th>
                 </tr>
               </thead>
-              <tbody></tbody>
+              <tbody id="precisa-body"></tbody>
             </table>
           </div>
-          <div class="empty-state">No XM60 measurements are connected yet.</div>
+          <div class="empty-state" id="precisa-empty">Choose a date range and load the report.</div>
         </section>
       </section>
-
       <section id="sources-view" class="view">
         <section class="panel">
           <div class="panel-head">
