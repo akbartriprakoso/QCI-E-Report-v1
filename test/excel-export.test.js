@@ -74,6 +74,8 @@ test('Excel export preserves numeric zero and fills missing cells with zero', as
   const legacyApi = http.createServer((req, res) => {
     const rows = req.url.includes('q1st-vdm-data') ? [{
       ID_LAP: 'VDM-ZERO-ROW',
+      START_TIME: '2026-10-06T09:23:45.000Z',
+      END_TIME: '2026-10-06T09:28:50.000Z',
       GOOD_KERNEL: 92.6,
       MOLD_DAMAGE: 0
     }] : [{
@@ -129,4 +131,9 @@ test('Excel export preserves numeric zero and fills missing cells with zero', as
   assert.equal(vdmWorksheet.getCell(2, headerColumn(vdmWorksheet, '04 Mold damage strong (%)')).value, 0);
   assert.equal(vdmWorksheet.getCell(2, headerColumn(vdmWorksheet, '06 Insect damage (%)')).value, 0);
   assert.equal(vdmWorksheet.getCell(2, headerColumn(vdmWorksheet, '07 Insect damage severe (%)')).value, 0);
+
+  const startTime = vdmWorksheet.getCell(2, headerColumn(vdmWorksheet, 'Start Time'));
+  const endTime = vdmWorksheet.getCell(2, headerColumn(vdmWorksheet, 'End Time'));
+  assert.equal(startTime.value, '09:23:45');
+  assert.equal(endTime.value, '09:28:50');
 });

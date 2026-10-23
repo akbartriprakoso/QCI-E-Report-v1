@@ -555,6 +555,46 @@ function excelDateValue(value) {
   return Number.isNaN(date.getTime()) ? value : date;
 }
 
+function excelTimeValue(value) {
+  if (!isPresent(value)) return null;
+
+  let hours;
+  let minutes;
+  let seconds;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return value;
+    hours = value.getUTCHours();
+    minutes = value.getUTCMinutes();
+    seconds = value.getUTCSeconds();
+  } else if (typeof value === 'number' && Number.isFinite(value)) {
+    const totalSeconds = Math.floor((((value % 1) + 1) % 1) * 86400 + 0.5);
+    hours = Math.floor(totalSeconds / 3600) % 24;
+    minutes = Math.floor((totalSeconds % 3600) / 60);
+    seconds = totalSeconds % 60;
+  } else {
+    const text = String(value).trim();
+    const match = /^(?:\d{4}-\d{2}-\d{2}[T\s])?(\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?\s*(AM|PM)?$/i.exec(text);
+    if (match) {
+      hours = Number(match[1]);
+      minutes = Number(match[2]);
+      seconds = Number(match[3] || 0);
+      if (match[5]) {
+        if (hours < 1 || hours > 12) return value;
+        hours = (hours % 12) + (match[5].toUpperCase() === 'PM' ? 12 : 0);
+      }
+      if (hours > 23 || minutes > 59 || seconds > 59) return value;
+    } else {
+      const date = new Date(text);
+      if (Number.isNaN(date.getTime())) return value;
+      hours = date.getUTCHours();
+      minutes = date.getUTCMinutes();
+      seconds = date.getUTCSeconds();
+    }
+  }
+
+  return [hours, minutes, seconds].map(part => String(part).padStart(2, '0')).join(':');
+}
+
 function arrayValue(value, index) {
   if (Array.isArray(value)) return value[index];
   return index === 0 ? value : undefined;
@@ -602,6 +642,10 @@ function templateValue(row, type, header, index) {
       const seconds = parseTime(end) - parseTime(start);
       if (Number.isFinite(seconds) && seconds >= 0) value = seconds / 60;
     }
+  }
+
+  if (type === 'vdm' && (header === 'Start Time' || header === 'End Time') && isPresent(value)) {
+    value = excelTimeValue(value);
   }
 
   if (Array.isArray(value)) value = value.join(' | ');

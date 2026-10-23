@@ -13,6 +13,7 @@
     moisture:['Moisture Analysis / PRG','moisture','BulkSampler20'],
     kett:['Kett / Dryer Report','kett','DATAPRODUKSI'],
     vdm:['Videometer Report','vdm','DATAQC + BulkSampler20'],
+    precisa:['Precisa XM60 Report',null,'XM60 MEASUREMENTS'],
     sources:['Data Source Monitor',null,'INTEGRATION STATUS']
   };
 
@@ -32,7 +33,6 @@
   async function boot(){
     try{
       const h=await api('/api/health'); state.mode=h.mode;
-      const pill=$('#mode-pill'); pill.textContent=h.mode==='legacy-api'?'LIVE ADAPTER':'DEMO MODE'; pill.classList.add(h.mode==='legacy-api'?'live':'demo');
       await Promise.all([loadSources(), loadReport('corn', true)]);
     }catch(e){ toast(e.message); }
   }
@@ -41,10 +41,12 @@
     state.view=view;
     $$('.nav-item').forEach(x=>x.classList.toggle('active',x.dataset.view===view));
     $$('.view').forEach(x=>x.classList.remove('active'));
-    $('#filter-panel').style.display = view==='sources' ? 'none' : 'grid';
+    $('#filter-panel').style.display = ['sources','precisa'].includes(view) ? 'none' : 'grid';
+    $('#refresh-btn').hidden = view==='precisa';
     const [title,type,kicker]=titles[view]; $('#page-title').textContent=title;
     if(view==='overview') $('#overview-view').classList.add('active');
     else if(view==='sources') $('#sources-view').classList.add('active');
+    else if(view==='precisa') $('#precisa-view').classList.add('active');
     else { $('#report-view').classList.add('active'); $('#report-title').textContent=title; $('#report-kicker').textContent=kicker; state.reportType=type; loadReport(type); }
   }
 
