@@ -52,6 +52,7 @@
   }
 
   function reload(){ return state.view==='precisa' ? loadPrecisa() : loadReport(); }
+  setInterval(()=>{ if(state.view==='precisa' && !document.hidden && !$('#load-btn').disabled) loadPrecisa(); },15000);
 
   const PRECISA_COLUMNS={
     TRUCK:[['Received',r=>fmtDate(r.receivedAt)],['ID_LAP',r=>`<b>${esc(r.idLap)}</b>`],['Truck',r=>esc(r.truckNo)],['PO',r=>esc(r.po||'–')],['Supplier',r=>esc(r.supplier||'–')],['Material',r=>esc(r.materialDescription||r.material||'–')],['Moisture (%)',r=>fmt(r.moisturePercent)],['Temperature (°C)',r=>fmt(r.temperatureC,1)],['Original Weight (g)',r=>fmt(r.originalWeightG)],['Operator',r=>esc(r.operator)],['XM60 Serial',r=>esc(r.serialNumber||'–')]],
